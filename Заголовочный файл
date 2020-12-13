@@ -1,0 +1,70 @@
+#include <iostream>
+ #include <vector>
+ #include <random>
+ #include <windows.h>
+ #include <fstream>
+ using namespace std;
+  
+  
+ class sudoku
+ {
+ private:
+     vector<int>DEFAULTmatrix;
+     vector<vector<int>>GENmatrix;
+     vector<vector<int>>GENmatrixSquare;
+     vector<vector<int>>GENmatrixSquareFirst;
+     vector<int>guessNum;
+     vector<vector<int>> Stages;
+ public:
+     sudoku(char);
+     void transparent();
+     vector<int>Random();
+     void SwapRowsDis(vector<int>numbers);
+     void SwapColumnsDis(vector<int>numbers);
+     void SwapRowsField(vector<int>numbers);
+     void SwapColumnsField(vector<int>numbers);
+     void DeleteNumbers(const char diff);
+     void Solutions(int& count);
+     void PrintField(bool need = 0, int x = 10, int y = 10);
+     bool isSolved();
+     bool isIt(int &, int &, int &);
+     bool isValid();
+     void GoBack();
+     void GetHint();
+     short DeleteCell(int x, int y);
+     bool isPoss(int x, int y);
+     void DevSolv();
+ };
+  
+ class sudokuCustom
+ {
+ private:
+     vector<vector<int>>GENmatrixSquareFirst;
+     vector<vector<int>>GENmatrixSquare;
+     vector<vector<int>>GENmatrixSquareTemp;
+     vector<int>guessNum;
+     vector<vector<int>> Stages;
+     bool isone = false;
+ public:
+     sudokuCustom();
+     int Solve2();
+     bool GetHint();
+     void PrintField(int need = 0, int x = 10, int y =10);
+     bool isPoss(int x, int y);
+     void Solutions(int& count);
+     int isValid();
+     void GoBack();
+     bool isIt(int, int, int, bool need=0);
+     int DeleteCell(int x, int y);
+     bool isSolved();
+     void DevSolv();
+ };
+  
+ bool FindEmptyLocation(vector<vector<int>> grid, int& r, int& c);
+ bool UsedInRow(vector<vector<int>> grid, int row, int num);
+ bool UsedInCol(vector<vector<int>> grid, int col, int num);
+ bool UsedInBox(vector<vector<int>> grid, int boxStartRow, int boxStartCol, int num);
+ bool isSafe(vector<vector<int>> grid, int row, int col, int num);
+ int genRandNum(int maxLimit);
+ void WriteStats(int levelDiff, bool win = 0);
+ void ShowStats();
