@@ -1,0 +1,587 @@
+#include "Header.h"
+  
+ sudoku::sudoku(char difficulty)
+ {
+     DEFAULTmatrix.resize(81);
+     guessNum.resize(9);
+     for (int i = 0; i < 9; i++)
+         guessNum[i] = i + 1;
+     random_shuffle(this->guessNum.begin(), this->guessNum.end(), genRandNum);
+     for (int i = 0; i < 3; i++)
+     {
+         int currNum = i + 1;
+         for (int k = 27 * i; k < 27 * i + 27; k++)
+         {
+             if (currNum > 9)
+                 currNum = 1;
+  
+             if (k != 27 * i && k % 9 == 0)
+                 currNum += 3;
+  
+             DEFAULTmatrix[k] = currNum;
+             currNum++;
+         }
+     }
+  
+     random_device rd;
+     mt19937 gen(rd());
+     std::uniform_real_distribution<> distribution(0, 100001);
+     int num = distribution(gen);
+     std::uniform_real_distribution<> distribution1(0, 5);
+     int choice;
+  
+     for (int i = 0; i < num; i++)
+     {
+         choice = distribution1(gen);
+         if (choice == 0)
+             transparent();
+         else if (choice == 1)
+             SwapRowsDis(Random());
+         else if (choice == 2)
+             SwapColumnsDis(Random());
+         else if (choice == 3)
+             SwapRowsField(Random());
+         else if (choice == 4)
+             SwapColumnsField(Random());
+     }
+     GENmatrixSquare.resize(9);
+     GENmatrix.resize(9);
+     for (int i = 0; i < 9; i++)
+     {
+         GENmatrixSquare[i].resize(9);
+         GENmatrix[i].resize(9);
+         for (int j = 0; j < 9; j++)
+         {
+             GENmatrixSquare[i][j] = DEFAULTmatrix[(9 * i) + j];
+             GENmatrix[i][j] = DEFAULTmatrix[(9 * i) + j];
+         }
+     }
+     DeleteNumbers(difficulty);
+     GENmatrixSquareFirst = GENmatrixSquare;
+ }
+  
+ void sudoku::transparent()
+ {
+     vector<int>temp(81);
+     for (int i = 0; i < 9; i++)
+     {
+         for (int j = 0; j < 9; j++)
+         {
+             temp[(9 * i) + j] = DEFAULTmatrix[i + (9 * j)];
+         }
+     }
+     DEFAULTmatrix = temp;
+ }
+  
+ void sudoku::SwapRowsDis(vector<int>numbers)
+ {
+     for (int i = (27 * numbers[0]) + (numbers[1] * 9); i < (27 * numbers[0]) + ((numbers[1] * 9) + 9); i++)
+     {
+         swap(DEFAULTmatrix[i], DEFAULTmatrix[i + (9 * (numbers[2] - numbers[1]))]);
+     }
+ }
+  
+ void sudoku::SwapColumnsDis(vector<int>numbers)
+ {
+     for (int i = (3 * numbers[0]) + numbers[1]; i <= 81 - (9 - ((3 * numbers[0]) + numbers[1])); i += 9)
+     {
+         swap(DEFAULTmatrix[i], DEFAULTmatrix[i + (numbers[2] - numbers[1])]);
+     }
+ }
+  
+ void sudoku::SwapRowsField(vector<int>numbers)
+ {
+     for (int i = 0; i < 3; i++)
+     {
+         for (int j = ((27 * numbers[1]) + 9 * i); j < ((27 * numbers[1]) + 9 * i) + 9; j++)
+         {
+             swap(DEFAULTmatrix[j], DEFAULTmatrix[j + (27 * (numbers[2] - numbers[1]))]);
+         }
+     }
+ }
+ void sudoku::SwapColumnsField(vector<int>numbers)
+ {
+     for (int i = 0; i < 3; i++)
+     {
+         for (int j = (3 * numbers[1]) + i; j <= 81 - (9 - ((3 * numbers[1]) + i)); j += 9)
+         {
+             swap(DEFAULTmatrix[j], DEFAULTmatrix[j + (3 * (numbers[2] - numbers[1]))]);
+         }
+     }
+ }
+  
+ void sudoku::DeleteNumbers(const char diff)
+ {
+     int num;
+     if (diff == 1)
+     {
+         num = 25;
+     }
+     else if (diff == 2)
+     {
+         num = 35;
+     }
+     else if (diff == 3)
+     {
+         num = 43;
+     }
+     else if (diff == 4)
+     {
+         num = 49;
+     }
+     else if (diff == 5)
+     {
+         num = 52;
+     }
+     else
+     {
+         return;
+     }
+     random_device rd;
+     mt19937 gen(rd());
+  
+     vector<vector<int>>coords;
+     int i;
+     int prev = -1;
+  
+     for (i = 0; i < num; i++)
+     {
+         if (prev != i)
+         {
+             coords.clear();
+             for (int i = 0; i < 9; i++)
+                 for (int j = 0; j < 9; j++)
+                     if (GENmatrixSquare[i][j] != 0)
+                         coords.push_back({ i, j });
+             prev = i;
+         }
+         if (prev == i && coords.size() == 0)
+         {
+             break;
+         }
+  
+         std::uniform_real_distribution<> distribution1(0, coords.size());
+         int el = distribution1(gen);
+  
+         int x = coords[el][0];
+         int y = coords[el][1];
+  
+         int temp = GENmatrixSquare[x][y];
+         GENmatrixSquare[x][y] = 0;
+  
+         int count = 0;
+         Solutions(count);
+         if (count != 1)
+         {
+             this->GENmatrixSquare[x][y] = temp;
+             coords.erase(coords.begin() + el, coords.begin() + el + 1);
+             i--;
+         }
+     }
+ }
+  
+ void sudoku::Solutions(int& count)
+ {
+     int r, c;
+  
+     if (!FindEmptyLocation(GENmatrixSquare, r, c))
+     {
+         count++;
+         return;
+     }
+  
+     for (int i = 0; i < 9 && count < 2; i++)
+     {
+         if (isSafe(this->GENmatrixSquare, r, c, this->guessNum[i]))
+         {
+             this->GENmatrixSquare[r][c] = this->guessNum[i];
+             Solutions(count);
+         }
+  
+         this->GENmatrixSquare[r][c] = 0;
+     }
+ }
+  
+ bool isSafe(vector<vector<int>> grid, int row, int col, int num)
+ {
+     return !UsedInRow(grid, row, num) && !UsedInCol(grid, col, num) && !UsedInBox(grid, row - row % 3, col - col % 3, num);
+ }
+  
+ bool UsedInRow(vector<vector<int>> grid, int row, int num)
+ {
+     for (int col = 0; col < 9; col++)
+     {
+         if (grid[row][col] == num)
+         {
+             return true;
+         }
+     }
+     return false;
+ }
+  
+ bool UsedInCol(vector<vector<int>> grid, int col, int num)
+ {
+     for (int row = 0; row < 9; row++)
+     {
+         if (grid[row][col] == num)
+         {
+             return true;
+         }
+     }
+  
+     return false;
+ }
+  
+ bool UsedInBox(vector<vector<int>> grid, int boxStartRow, int boxStartCol, int num)
+ {
+     for (int row = 0; row < 3; row++)
+     {
+         for (int col = 0; col < 3; col++)
+         {
+             if (grid[row + boxStartRow][col + boxStartCol] == num)
+             {
+                 return true;
+             }
+         }
+     }
+  
+     return false;
+ }
+  
+ bool FindEmptyLocation(vector<vector<int>> grid, int& r, int& c)
+ {
+     for (r = 0; r < 9; r++)
+     {
+         for (c = 0; c < 9; c++)
+         {
+             if (grid[r][c] == 0)
+                 return true;
+         }
+     }
+  
+     return false;
+ }
+  
+ vector<int>sudoku::Random()
+ {
+     vector<int>numbers(3);
+  
+     random_device rd;
+     mt19937 gen(rd());
+     std::uniform_real_distribution<> distribution(0, 3);
+     numbers[0] = distribution(gen);
+     uniform_real_distribution<>distribution1(0, 2);
+     numbers[1] = distribution1(gen);
+     uniform_real_distribution<>distribution2(0, 3);
+     numbers[2] = distribution2(gen);
+  
+     while (numbers[2] == numbers[1])
+     {
+         uniform_real_distribution<>distribution3(0, 3);
+         numbers[2] = distribution3(gen);
+     }
+  
+     if (numbers[1] > numbers[2])
+         swap(numbers[2], numbers[1]);
+  
+     return numbers;
+ }
+  
+ int genRandNum(int maxLimit)
+ {
+     return rand() % maxLimit;
+ }
+  
+ void sudoku::PrintField(bool need, int x, int y)
+ {
+     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+     if (need == true)
+         cout << "0 0 для перехода в меню взаимодействия с полем и игрой\n\n";
+     else
+         cout << "\n\n";
+     SetConsoleTextAttribute(handle, 5);
+     cout << "  ";
+     for (int i = 0; i < 9; i++)
+     {
+         if (i % 3 == 0 && i != 0)
+             cout << " ";
+         cout << i + 1 << " ";
+     }
+     SetConsoleTextAttribute(handle, 7);
+     cout << "\n";
+     for (int i = 0; i < 9; i++)
+     {
+         SetConsoleTextAttribute(handle, 5);
+         cout << i + 1 << " ";
+         SetConsoleTextAttribute(handle, 7);
+         for (int j = 0; j < 9; j++)
+         {
+             if (j % 3 == 0 && j != 0)
+                 cout << " ";
+             if (GENmatrixSquare[i][j] == 0)
+             {
+                 if (x == i && y == j)
+                 {
+                     SetConsoleTextAttribute(handle, 11);
+                     cout << "_" << " ";
+                     SetConsoleTextAttribute(handle, 7);
+                 }
+                 else
+                 {
+                     SetConsoleTextAttribute(handle, 8);
+                     cout << "X" << " ";
+                     SetConsoleTextAttribute(handle, 7);
+                 }
+             }
+             else
+                 cout << GENmatrixSquare[i][j] << " ";
+         }
+         if ((i + 1) % 3 == 0)
+             cout << "\n";
+         cout << "\n";
+     }
+ }
+  
+ bool sudoku::isSolved()
+ {
+     return GENmatrixSquare == GENmatrix;
+ }
+  
+  
+ bool sudoku::isIt(int &value, int& x, int& y)
+ {
+     system("CLS");
+     if (GENmatrix[x - 1][y - 1] == value)
+     {
+         GENmatrixSquare[x - 1][y - 1] = value;
+         Stages.push_back({x-1, y-1});
+         return true;
+     }
+     else
+     {
+         bool check = true;
+         for (int i = 0; i < 9; i++)
+         {
+             if (i == (y - 1))
+                 continue;
+             if (value == GENmatrixSquare[x - 1][i])
+             {
+                 HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+                 SetConsoleTextAttribute(handle, 4);
+                 cout << GENmatrixSquare[x-1][i] << " повторяется в строке " <<
+                     " (" << x << ":" << i+1 << ")\n";
+                 SetConsoleTextAttribute(handle, 7);
+                 check = false;
+                 break;
+             }
+         }
+         for (int i = 0; i < 9; i++)
+         {
+             if (i == (x - 1))
+                 continue;
+             if (value == GENmatrixSquare[i][y - 1])
+             {
+                 HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+                 SetConsoleTextAttribute(handle, 4);
+                 cout << GENmatrixSquare[i][y-1] << " повторяется в столбце " <<
+                     " (" << i + 1 <<  ":" << y << ")\n";
+                 SetConsoleTextAttribute(handle, 7);
+                 check = false;
+                 break;
+             }
+         }
+         int boxStartRow = (x - 1) - ((x - 1) % 3);
+         int boxStartCol = (y - 1) - ((y - 1) % 3);
+         for (int row = 0; row < 3; row++)
+         {
+             for (int col = 0; col < 3; col++)
+             {
+                 if (GENmatrixSquare[row + boxStartRow][col + boxStartCol] == value)
+                 {
+                     HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+                     SetConsoleTextAttribute(handle, 4);
+                     cout << GENmatrixSquare[row + boxStartRow][col + boxStartCol] << " повторяется в квадрате " <<
+                         " (" << row + boxStartRow + 1 << ":" << col + boxStartCol + 1 << ")\n";
+                     SetConsoleTextAttribute(handle, 7);
+                     check = false;
+                     break;
+                 }
+             }
+         }
+         if (check == true)
+         {
+             GENmatrixSquare[x - 1][y - 1] = value;
+             Stages.push_back({ x - 1, y - 1 });
+         }
+         return check;
+     }
+ }
+ bool sudoku::isValid()
+ {
+     for (int i=0; i < 9;i++)
+         for (int j = 0; j < 9; j++)
+         {
+             if ((GENmatrix[i][j] != GENmatrixSquare[i][j]) && GENmatrixSquare[i][j] != 0)
+                 return false;
+         }
+     return true;
+ }
+  
+ void sudoku::GoBack()
+ {
+     if (Stages.size() == 0)
+     {
+         system("CLS");
+         cout << "Пока не было ходов\n";
+         return;
+     }
+     GENmatrixSquare[Stages.back()[0]][Stages.back()[1]] = 0;
+     Stages.pop_back();
+ }
+  
+ void sudoku::GetHint()
+ {
+     random_device rd;
+     mt19937 gen(rd());
+     std::uniform_real_distribution<> distribution(0, 81);
+     int x, y;
+  
+     int check = false;
+     int begin = distribution(gen);
+     for (int i = begin; i < 81; i++)
+     {
+         x = i / 9;
+         y = i % 9;
+         if (GENmatrixSquare[x][y] == 0)
+         {
+             GENmatrixSquare[x][y] = GENmatrix[x][y];
+             return;
+         }
+     }
+     for (int i = begin; i >= 0; i--)
+     {
+         x = i / 9;
+         y = i % 9;
+         if (GENmatrixSquare[x][y] == 0)
+         {
+             GENmatrixSquare[x][y] = GENmatrix[x][y];
+             return;
+         }
+     }
+ }
+  
+ short sudoku::DeleteCell(int x, int y)
+ {
+     if (GENmatrixSquareFirst[x][y] != 0)
+         return 0;
+     else if (GENmatrixSquare[x][y] == 0)
+         return 1;
+     else
+     {
+         for (int i = 0 ; i < Stages.size();i++)
+         {
+             if (Stages[i][0] == x && Stages[i][1] == y)
+             {
+                 Stages.erase(Stages.begin() + i);
+             }
+         }
+         GENmatrixSquare[x][y] = 0;
+         return 2;
+     }
+ }
+  
+ bool sudoku::isPoss(int x, int y)
+ {
+     if (GENmatrixSquare[x][y] != 0)
+         return false;
+     else
+         return true;
+ }
+  
+ void WriteStats(int levelDiff, bool win)
+ {
+     ifstream ifs;
+     ifs.open("SudokuStats.txt");
+     vector<int>stats(13);
+     for (int x : stats)
+         stats[x] = 0;
+  
+     if (!ifs.is_open())
+     {
+         ofstream of;
+         of.open("SudokuStats.txt");
+         of << '0' << endl
+             << '0' << endl << '0' << endl
+             << '0' << endl << '0' << endl
+             << '0' << endl << '0' << endl
+             << '0' << endl << '0' << endl
+             << '0' << endl << '0' << endl
+             << '0' << endl << '0' << endl;
+         of.close();
+     }
+     
+     for (int i = 0; i < 13; i++)
+     {
+         ifs >> stats[i];
+     }
+  
+     stats[0]++;
+     stats[levelDiff]++;
+     if (win == true)
+     {
+         stats[levelDiff + 6]++;
+     }
+  
+     ifs.close();
+     ofstream of("SudokuStats.txt");
+     for (int i = 0; i < 13; i++)
+     {
+         of << stats[i] << endl;
+     }
+ }
+  
+ void ShowStats()
+ {
+     string diffs[] = { "Легкая", "Обычная", "Средняя", "ВышеСрд", "Сложная" };
+     ifstream ifs;
+     ifs.open("SudokuStats.txt");
+     if (!ifs.is_open())
+     {
+         ofstream of;
+         of.open("SudokuStats.txt");
+         of << '0' << endl
+             << '0' << endl << '0' << endl
+             << '0' << endl << '0' << endl
+             << '0' << endl << '0' << endl
+             << '0' << endl << '0' << endl
+             << '0' << endl << '0' << endl
+             << '0' << endl << '0' << endl;
+     }
+     cout << "Автоматически созданное поле:\n";
+     int tmp;
+     cout << "Всего игр сыграно: ";
+     ifs >> tmp;
+     cout << tmp << "\n\n";
+     vector<int>stats(13);
+     for (int x : stats)
+         stats[x] = 0;
+  
+     cout << "Уровень сложности\tСыграно игр\tПобеды\n\n";
+     for (int i = 1; i <=12; i++)
+     {
+         ifs >> stats[i];
+     }
+     for (int i = 1; i <= 5; i++)
+     {
+         cout << diffs[i - 1] << "\t\t\t    " << stats[i] << "\t\t   " << stats[i + 6] << "\n\n";
+     }
+     cout << "\nСамостоятельно созданное поле:\n";
+     cout << "Сыграно игр\tПобеды\n\n";
+     cout <<stats[6] << "\t\t   " << stats[12] << "\n\n";
+  
+ }
+  
+ void sudoku::DevSolv()
+ {
+     GENmatrixSquare = GENmatrix;
+ }
