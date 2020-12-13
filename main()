@@ -1,0 +1,346 @@
+#include "Header.h"
+ #include <iostream>
+  
+ using namespace std;
+ void Displaygamemenu();
+  
+ int main()
+ {
+     setlocale(LC_ALL, "Russian");
+     int choice;
+     while (1)
+     {
+         system("CLS");
+         cout << "1. Начать новую игру\n"
+             "2. Задать начальное поле\n"
+             "3. Статистика\n";
+         cin >> choice;
+         system("CLS");
+         if (choice == 1)
+         {
+             cout << "Сложность:\n"
+                 "1. Легкая\n"
+                 "2. Обычная\n"
+                 "3. Средняя\n"
+                 "4. Выше среднего\n"
+                 "5. Сложная\n\n"
+                 "0. Назад\n";
+             int ch2;
+             cin >> ch2;
+             if (ch2 < 0 || ch2 >5)
+             {
+                 system("CLS");
+                 cout << "Недопустимый выбор\n";
+                 continue;
+             }
+             if (ch2 == 0)
+             {
+                 continue;
+             }
+             
+             system("CLS");
+             cout << "Идет генерация поля...";
+             sudoku A(ch2);
+             system("CLS");
+             A.PrintField(1);
+             while (!A.isSolved())
+             {
+                 int x, y, val;
+                 cout << "\nЯчейка(Строка,Столбец): ";
+                 cin >> x >> y;
+                 if (x == 0 && y == 0)
+                 {
+                     Displaygamemenu();
+                     int ch3;
+                     cin >> ch3;
+                     if (ch3 == 1)
+                     {
+                         A.GetHint();
+                         system("CLS");
+                         A.PrintField(1);
+                         continue;
+                     }
+                     else if (ch3 == 2)
+                     {
+                         system("CLS");
+                         if (A.isValid())
+                             cout << "\nИз текущей расстановки можно собрать судоку\n\n";
+                         else
+                             cout << "\nИз текущей расстановки нельзя собрать судоку\n\n";
+                         A.PrintField(1);
+                         continue;
+                     }
+                     else if (ch3 == 3)
+                     {
+                         system("CLS");
+                         A.GoBack();
+                         A.PrintField(1);
+                         continue;
+                     }
+                     else if (ch3 == 4)
+                     {
+                         cout << "Значение в какой клетке нужно удалить: ";
+                         cin >> x >> y;
+                         if (x <= 0 || y <= 0 || x >= 10 || y >= 10)
+                         {
+                             system("CLS");
+                             cout << "Введена недопустимая клетка\n\n";
+                             A.PrintField(1);
+                             continue;
+                         }
+                         system("CLS");
+                         short what = A.DeleteCell(x - 1, y - 1);
+                         if (what == 0)
+                             cout << "Нельзя удалять сгенерированные клетки\n\n";
+                         else if (what == 1)
+                             cout << "Нельзя удалить пустую клетку\n\n";
+                         else if (what == 2)
+                             cout << "Значение в клетке (" << x << ":" << y << ") удалено\n\n";
+  
+                         A.PrintField(1);
+                         continue;
+                     }
+                     else if (ch3 == 5)
+                     {
+                         WriteStats(ch2);
+                         system("CLS");
+                         break;
+                     }
+                     else if (ch3 == 6)
+                     {
+                         system("CLS");
+                         A.DevSolv();
+                         continue;
+                     }
+                     else if (ch3 == 0)
+                     {
+                         system("CLS");
+                         A.PrintField(1);
+                         continue;
+                     }
+                     else
+                     {
+                         system("CLS");
+                         cout << "Недопустимый выбор\n\n";
+                         A.PrintField(1);
+                         continue;
+                     }
+                 }
+                 if (!A.isPoss(x-1, y-1))
+                 {
+                     system("CLS");
+                     cout << "Клетка уже заполнена\n\n";
+                     A.PrintField(1);
+                     continue;
+                 }
+                 system("CLS");
+                 A.PrintField(0, x - 1, y - 1);
+                 cout << "Число: ";
+                 cin >> val;
+                 A.isIt(val, x, y);
+                 A.PrintField(1);
+             }
+             if (A.isSolved())
+             {
+                 WriteStats(ch2, 1);
+                 A.PrintField();
+                 cout << "\nВы собрали судоку\n";
+                 cin.get();
+                 cin.get();
+                 system("CLS");
+                 continue;
+             }
+         }
+         else if (choice == 2)
+         {
+             sudokuCustom A;
+             int count = A.Solve2();
+             if (count == 1)
+             {
+                 HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+                 SetConsoleTextAttribute(handle, 2);
+                 cout << "Существует " << 1 << " решение\n\n";
+                 SetConsoleTextAttribute(handle, 7);
+             }
+             else if (count > 1)
+             {
+                 HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+                 SetConsoleTextAttribute(handle, 2);
+                 cout << "Существует множество решений\n\n";
+                 SetConsoleTextAttribute(handle, 7);
+             }
+             else if (count == 0)
+             {
+                 HANDLE handle =GetStdHandle(STD_OUTPUT_HANDLE);
+                 SetConsoleTextAttribute(handle, 2);
+                 system("CLS");
+                 cout << "Решений нет\n\n";
+                 SetConsoleTextAttribute(handle, 7);
+                 cin.get();
+                 cin.get();
+                 continue;
+             }
+  
+             A.PrintField(1);
+             while (!A.isSolved())
+             {
+                 int x, y, val;
+                 cout << "\nЯчейка(x,y): ";
+                 cin >> x >> y;
+                 if (x == 0 && y == 0)
+                 {
+                     Displaygamemenu();
+                     int ch3;
+                     cin >> ch3;
+                     if (ch3 == 1)
+                     {
+                         system("CLS");
+                         cout << "Подсказка загружается...";
+                         if (!A.GetHint())
+                         {
+                             system("CLS");
+                             cout << "Из текущей расстановки нельзя собрать судоку\n\n";
+                             A.PrintField(1);
+                             continue;
+                         }   
+                         system("CLS");
+                         A.PrintField(1);
+                         continue;
+                     }
+                     else if (ch3 == 2)
+                     {
+                         system("CLS");
+                         cout << "Идет проверка, можно ли собрать судоку";
+                         int check = A.isValid();
+                         if (check == 1)
+                         {
+                             HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+                             SetConsoleTextAttribute(handle, 2);
+                             system("CLS");
+                             cout << "\nИз текущей расстановки можно собрать одно судоку\n\n";
+                             SetConsoleTextAttribute(handle, 7);
+                         }
+                         else if (check > 1)
+                         {
+                             HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+                             SetConsoleTextAttribute(handle, 2);
+                             system("CLS");
+                             cout << "Из текущей расстановки можно собрать несколько судоку\n\n";
+                             SetConsoleTextAttribute(handle, 7);
+                         }
+                         else if (check == 0)
+                         {
+                             HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
+                             SetConsoleTextAttribute(handle, 4);
+                             system("CLS");
+                             cout << "\nИз текущей расстановки нельзя собрать судоку\n\n";
+                             SetConsoleTextAttribute(handle, 7);
+                         }
+                         A.PrintField(1);
+                         continue;
+                     }
+                     else if (ch3 == 3)
+                     {
+                         system("CLS");
+                         A.GoBack();
+                         A.PrintField(1);
+                         continue;
+                     }
+                     else if (ch3 == 4)
+                     {
+                         cout << "Значение в какой клетке нужно удалить: ";
+                         cin >> x >> y;
+                         if (x <= 0 || y <= 0 || x >= 10 || y >= 10)
+                         {
+                             system("CLS");
+                             cout << "Введена недопустимая клетка\n\n";
+                             A.PrintField(1);
+                             continue;
+                         }
+                         system("CLS");
+                         short what = A.DeleteCell(x - 1, y - 1);
+                         if (what == 0)
+                             cout << "Нельзя удалять изначально созданные клетки\n\n";
+                         else if (what == 1)
+                             cout << "Нельзя удалить пустую клетку\n\n";
+                         else if (what == 2)
+                             cout << "Значение в клетке (" << x << ":" << y << ") удалено\n\n";
+  
+                         A.PrintField(1);
+                         continue;
+                     }
+                     else if (ch3 == 5)
+                     {
+                         WriteStats(6);
+                         system("CLS");
+                         break;
+                     }
+                     else if (ch3 == 6)
+                     {
+                         system("CLS");
+                         A.DevSolv();
+                         continue;
+                     }
+                     else if (ch3 == 0)
+                     {
+                         system("CLS");
+                         A.PrintField(1);
+                         continue;
+                     }
+                     else
+                     {
+                         system("CLS");
+                         cout << "Недопустимый выбор\n\n";
+                         A.PrintField(1);
+                         continue;
+                     }
+                 }
+                 if (!A.isPoss(x - 1, y - 1))
+                 {
+                     system("CLS");
+                     cout << "Клетка уже заполнена\n\n";
+                     A.PrintField(1);
+                     continue;
+                 }
+                 system("CLS");
+                 A.PrintField(0, x - 1, y - 1);
+                 cout << "Число: ";
+                 cin >> val;
+                 system("CLS");
+                 A.isIt(val, x, y);
+                 A.PrintField(1);
+             }
+             if (A.isSolved())
+             {
+                 WriteStats(6, 1);
+                 A.PrintField();
+                 cout << "\nВы собрали судоку\n";
+                 cin.get();
+                 cin.get();
+                 system("CLS");
+                 continue;
+             }
+         }
+         else if (choice == 3)
+         {
+  
+         ShowStats();
+         cout << "\n\n0. Назад\n";
+         cin.get();
+         cin.get();
+         system("CLS");
+         }
+     }
+ }
+  
+ void Displaygamemenu()
+ {
+     cout << "1. Подсказка\n"
+         "2. Проверка, можно ли из текущей расстановки собрать судоку\n"
+         "3. Удалить последнее введенное значение\n"
+         "4. Удалить значение в клетке\n"
+         "5. Закончить игру\n"
+         "6. Решить\n\n"
+         "0. Назад в игру\n";
+ }
+  
